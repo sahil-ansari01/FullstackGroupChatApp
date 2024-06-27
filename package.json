@@ -1,0 +1,33 @@
+{
+  "name": "fullstackgroupchatapp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "ap.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sahil-ansari01/FullstackGroupChatApp.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sahil-ansari01/FullstackGroupChatApp/issues"
+  },
+  "homepage": "https://github.com/sahil-ansari01/FullstackGroupChatApp#readme",
+  "devDependencies": {
+    "express": "^4.19.2",
+    "nodemon": "^3.1.4"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "mysql2": "^2.3.3",
+    "sequelize": "^6.37.3"
+  }
+}
