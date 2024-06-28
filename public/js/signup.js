@@ -37,13 +37,13 @@ async function signup(e) {
         if (error.response) {
             if (error.response.status === 400) {
                 alert(error.response.data.error);
-            } else {
-                alert('An error occured!')
+            } else if(error.response.status === 500) {
+                alert('Phone number must be unqiue!')
             }
         } else if (error.request) {
             alert('No response from the server!')
         } else {
-            alert('Error setting up the request!')
+            alert('Error setting up the request!')  
         }
     }
 }

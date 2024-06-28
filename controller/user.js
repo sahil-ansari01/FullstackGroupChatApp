@@ -29,7 +29,7 @@ exports.postSignup = async (req, res, next) => {
         // Check if user with the same email already exists
         const existingUser = await User.findOne({ where: { email: email } });
         if (existingUser) {
-            return res.status(400).json({ error: 'User already exists!' });
+            return res.status(400).json({ error: 'User already exists, Please login!' });
         }
 
         // Hash the password
@@ -37,7 +37,7 @@ exports.postSignup = async (req, res, next) => {
 
         // Create new user
         const newUser = await User.create({ name, email, phone, password: hashedPassword });
-        res.status(201).json({ message: 'User created successfully!', user: newUser });
+        res.status(201).json({ message: 'Successfully signed up!', user: newUser });
     } catch (err) {
         console.error('Error creating user:', err);
         res.status(500).json({ error: 'Failed to create user', details: err });
