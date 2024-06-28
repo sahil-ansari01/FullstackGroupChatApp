@@ -43,3 +43,13 @@ exports.postSignup = async (req, res, next) => {
         res.status(500).json({ error: 'Failed to create user', details: err });
     }
 };
+
+exports.getLogin = async (req, res, next) => {
+    try {
+        res.sendFile(path.join(__dirname, '..', 'public', 'html', 'login.html'));
+    } catch (err) {
+        res.status(404).json({
+            error: err
+        });
+    }
+};
