@@ -27,6 +27,7 @@ async function signup(e) {
 
         console.log(response);
         if (response.status === 201) {
+            alert('Successfuly signed up!');
             window.location.href = '/user/login';
         } else {
             throw new Error('Failed to login!')
