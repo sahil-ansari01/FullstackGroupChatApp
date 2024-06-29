@@ -3,9 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>Chat Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .chat-container {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+    </style>
 </head>
-<body>
-    <h4>This is a Dashboard</h4>
+<body class="min-h-screen flex flex-col bg-gradient-to-r from-green-400 to-blue-500">
+    <header class="bg-white shadow-lg p-4">
+        <h1 class="text-2xl font-bold text-center text-gray-800">Chat App</h1>
+    </header>
+    <main class="flex-grow flex flex-col items-center justify-center p-4">
+        <div class="w-full max-w-3xl bg-white p-4 rounded-lg shadow-lg flex flex-col">
+            <div id="chat" class="chat-container mb-4 flex flex-col space-y-2">
+                <div class="bg-gray-300 p-2 rounded">You joined</div>
+                <div class="bg-gray-300 p-2 rounded">Vaibhav joined</div>
+                <div class="bg-gray-300 p-2 rounded">Vaibhav: hello</div>
+                <div class="bg-gray-300 p-2 rounded">You: hi There</div>
+                <div class="bg-gray-300 p-2 rounded">Vaibhav: What is up?</div>
+                <div class="bg-gray-300 p-2 rounded">Vaibhav: All good</div>
+            </div>
+            <form id="messageForm" class="flex">
+                <input id="messageInput" class="flex-grow border rounded-l-lg p-2 focus:outline-none" type="text" placeholder="Type your message" required>
+                <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-r-lg focus:outline-none" type="submit">Send</button>
+            </form>
+        </div>
+    </main>
+    <script>
+        const messageForm = document.getElementById('messageForm');
+        const messageInput = document.getElementById('messageInput');
+        const chat = document.getElementById('chat');
+
+        messageForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const message = messageInput.value;
+            if (message.trim() !== "") {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('bg-gray-300', 'p-2', 'rounded');
+                messageElement.textContent = `You: ${message}`;
+                chat.appendChild(messageElement);
+                chat.scrollTop = chat.scrollHeight;
+                messageInput.value = '';
+            }
+        });
+    </script>
 </body>
 </html>
