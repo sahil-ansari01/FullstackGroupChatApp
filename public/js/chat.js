@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         newMessages.forEach(message => {
             addMessageToChat(message);
         });
-    }, 5000);
+    }, 1000);
     
     // Initial load of messages
     async function fetchMessages() {
