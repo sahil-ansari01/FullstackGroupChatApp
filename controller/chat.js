@@ -1,5 +1,16 @@
+const path = require('path');
 const Chat = require('../models/chat');
 const User = require('../models/user');
+
+exports.getChat = async (req, res, next) => {
+    try {
+        res.sendFile(path.join(__dirname, '..', 'public', 'html', 'chat.html'));
+    } catch (err) {
+        res.status(404).json({
+            error: err
+        });
+    }
+}
 
 exports.getMessages = async (req, res, next) => {
     try {

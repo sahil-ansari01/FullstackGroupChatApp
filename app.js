@@ -23,11 +23,6 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve chat.html for the /chat route
-app.get('/chat', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'html', 'chat.html'));
-});
-
 app.use('/user', userRoutes);
 app.use('/chat', chatRoutes);
 
