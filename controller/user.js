@@ -2,6 +2,7 @@ const path = require('path');
 const User = require('../models/user');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { where } = require('sequelize');
 
 function isStringValidate(string) {
     return string === undefined || string.length === 0;
@@ -19,9 +20,9 @@ exports.getSignup = async (req, res, next) => {
 
 exports.postSignup = async (req, res, next) => {
     try {
-        const { name, email, phone, password } = req.body;
+        const { name, email, phoneNumber, password } = req.body;
 
-        if (isStringValidate(name) || isStringValidate(email) || isStringValidate(phone) || isStringValidate(password)) {
+        if (isStringValidate(name) || isStringValidate(email) || isStringValidate(phoneNumber) || isStringValidate(password)) {
             return res.status(400).json({
                 error: 'Bad parameters. Something is missing'
             });
@@ -37,7 +38,7 @@ exports.postSignup = async (req, res, next) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create new user
-        const newUser = await User.create({ name, email, phone, password: hashedPassword });
+        const newUser = await User.create({ name, email, phoneNumber, password: hashedPassword });
         res.status(201).json({ message: 'Successfully signed up!', user: newUser });
     } catch (err) {
         console.error('Error creating user:', err);
@@ -85,5 +86,15 @@ exports.postLogin = async (req, res, next) => {
         }
     } catch (err) {
         res.status(500).json({ success: false, message: err });
+    }
+}
+
+exports.getUser = async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const user = User.findByPk(userId);
+        res.status(200).json({ user })
+    } catch (err) { 
+        console.log(err);
     }
 }

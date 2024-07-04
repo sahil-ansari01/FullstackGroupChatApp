@@ -19,7 +19,7 @@ async function signup(e) {
         const signupDetails = {
             name: e.target.name.value,
             email: e.target.email.value,
-            phone: e.target.phone.value,
+            phoneNumber: e.target.phone.value,
             password: e.target.password.value,
         }
 

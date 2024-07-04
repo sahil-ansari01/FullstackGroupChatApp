@@ -3,33 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Dashboard</title>
+    <title>Group Chat Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         .chat-container {
-            max-height: 70vh;
+            height: calc(100vh - 8rem);
             overflow-y: auto;
+        }
+        .group-list {
+            height: calc(100vh - 4rem);
+            overflow-y: auto;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.visible {
+            display: flex;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col bg-gradient-to-r from-green-400 to-blue-500">
-    <header class="bg-white shadow-lg p-4 flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-gray-800">Chat App</h1>
-        <a id="logoutButton" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none" href="user/login">
-            Logout
-        </a>
+<body class="bg-gray-100">
+    <header class="bg-green-500 shadow-lg p-4 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-white">Group Chat App</h1>
+        <div>
+            <button id="newGroupBtn" class="bg-white text-green-500 font-bold py-2 px-4 rounded mr-2 focus:outline-none">
+                New Group
+            </button>
+            <a id="logoutButton" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none" href="/user/login">
+                Logout
+            </a>
+        </div>
     </header>
-    <main class="flex-grow flex flex-col items-center justify-center p-4">
-        <div class="w-full max-w-3xl bg-white p-4 rounded-lg shadow-lg flex flex-col">
-            <div id="chat" class="chat-container mb-4 flex flex-col space-y-2">
-                <!-- Messages will be dynamically loaded here -->
+    <main class="flex h-screen">
+        <div class="w-1/4 bg-white border-r">
+            <div class="p-4 bg-gray-200">
+                <input type="text" id="groupSearch" placeholder="Search groups" class="w-full p-2 rounded border focus:outline-none focus:border-green-500">
             </div>
-            <form id="messageForm" class="flex">
-                <input id="messageInput" class="flex-grow border rounded-l-lg p-2 focus:outline-none" type="text" placeholder="Type your message" required>
-                <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-r-lg focus:outline-none" type="submit">Send</button>
+            <div id="groupList" class="group-list p-2 space-y-2">
+                <!-- Groups will be dynamically loaded here -->
+            </div>
+        </div>
+        <div class="w-3/4 flex flex-col">
+            <div id="currentGroupHeader" class="bg-gray-200 p-4 font-bold text-lg">
+                <!-- Current group name will be displayed here -->
+            </div>
+            <div id="chat" class="chat-container flex-grow p-4 space-y-2 overflow-y-auto">
+                <!-- Chat messages will be dynamically loaded here -->
+            </div>
+            <form id="messageForm" class="p-4 bg-white">
+                <div class="flex">
+                    <input id="messageInput" class="flex-grow border rounded-l-lg p-2 focus:outline-none focus:border-green-500" type="text" placeholder="Type your message" required>
+                    <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-r-lg focus:outline-none" type="submit">Send</button>
+                </div>
             </form>
         </div>
     </main>
+
+    <!-- New Group Modal -->
+    <div id="newGroupModal" class="modal">
+        <div class="bg-white p-4 rounded-lg">
+            <h2 class="text-xl font-bold mb-4">Create New Group</h2>
+            <form id="newGroupForm">
+                <input type="text" id="groupName" placeholder="Group Name" class="w-full p-2 mb-4 border rounded focus:outline-none focus:border-green-500" required>
+                <input type="text" id="groupParticipants" placeholder="Enter phone numbers separated by comma" class="w-full p-2 mb-4 border rounded focus:outline-none focus:border-green-500" required>
+                <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none">Create Group</button>
+                <button type="button" id="closeModal" class="ml-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none">Cancel</button>
+            </form>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
     <script src="../js/chat.js"></script>
