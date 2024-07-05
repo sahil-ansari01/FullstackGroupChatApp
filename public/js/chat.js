@@ -63,16 +63,13 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         const messageElement = document.createElement('div');
         messageElement.dataset.timestamp = message.timestamp;
         messageElement.classList.add('message', 'p-2', 'mb-2', 'rounded');
-
+        console.log(message);
         let sender;
         if (message.userId === userId) {
             sender = 'You';
             messageElement.classList.add('bg-blue-100', 'text-right');
-        } else if (message.user && message.user.name) {
-            sender = message.user.name;
-            messageElement.classList.add('bg-gray-100');
-        } else if (message.userName) {
-            sender = message.userName;
+        } else if (message.User && message.User.name) {
+            sender = message.User.name;
             messageElement.classList.add('bg-gray-100');
         } else {
             sender = message.userId ? `User ${message.userId}` : 'Unknown User';
