@@ -1,4 +1,4 @@
-const { Op } = require('sequelize');
+const { Op, where } = require('sequelize');
 const Group = require('../models/group');
 const GroupMember = require('../models/groupMember');
 const User = require('../models/user');
@@ -65,33 +65,34 @@ exports.getGroups = async (req, res) => {
     try {
         console.log('Fetching groups for user:', userId);
 
-        const groups = await Group.findAll({
-            include: [{
-                model: User,
-                as: 'members',
-                through: {
-                    attributes: [], // Exclude intermediate table attributes
-                    where: {
-                        userId: userId
-                    },
-                },
-                attributes: ['id', 'name', 'email'] // Attributes of the User model to include
-            }]
+        const groupMembers = await GroupMember.findAll({
+            where: {
+                userId: userId
+            }
         });
 
-        if (groups.length === 0) {
+        const involvedGroups = groupMembers.map(member => member.groupId);
+
+        console.log('Involved group IDs:', involvedGroups);
+
+        if (involvedGroups.length === 0) {
             console.log('No groups found for user:', userId);
             return res.json({ groups: [] });
         }
 
-        console.log(`Found ${groups.length} groups for user:`, userId);
-        res.json({ groups });
+        const groupsList = await Group.findAll({
+            where: {
+                id: involvedGroups
+            }
+        });
+
+        console.log(`Found ${groupsList.length} groups for user:`, userId);
+        res.json({ groups: groupsList });
     } catch (error) {
         console.error('Error fetching groups:', error);
         res.status(500).json({ error: 'Failed to fetch groups' });
     }
 };
-
 
 exports.getGroupMessages = async (req, res, next) => {
     const { groupId } = req.params;
