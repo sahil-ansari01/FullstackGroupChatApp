@@ -7,28 +7,48 @@ const Chat = require('../models/chat');
 exports.createGroup = async (req, res, next) => {
     const { name, createdBy, participants } = req.body;
     
+    if (!participants || participants.length === 0) {
+        return res.status(400).json({ error: 'At least one participant is required' });
+    }
+
+    const transaction = await Group.sequelize.transaction();
+
     try {
         // Create the group
-        const group = await Group.create({ name, createdBy });
+        const group = await Group.create({ name, createdBy }, { transaction });
 
         // Add the creator as an admin GroupMember
         const creatorUser = await User.findByPk(createdBy);
-        if (creatorUser) {
-            await GroupMember.create({ groupId: group.id, userId: creatorUser.id, isAdmin: true });
-        } else {
+        if (!creatorUser) {
             throw new Error('Creator user not found');
         }
+        await GroupMember.create({ groupId: group.id, userId: creatorUser.id, isAdmin: true }, { transaction });
 
         // Add participants as GroupMembers
-        await Promise.all(participants.map(async (phoneNumber) => {
+        const addedParticipants = await Promise.all(participants.map(async (phoneNumber) => {
             const user = await User.findOne({ where: { phoneNumber } });
             if (user) {
-                await GroupMember.create({ groupId: group.id, userId: user.id });
+                await GroupMember.findOrCreate({
+                    where: { groupId: group.id, userId: user.id },
+                    defaults: { isAdmin: false },
+                    transaction
+                });
+                return user.phoneNumber;
             }
+            return null;
         }));
 
-        res.status(201).json({ success: true, groupId: group.id });
+        const notFoundParticipants = participants.filter(p => !addedParticipants.includes(p));
+
+        await transaction.commit();
+
+        res.status(201).json({ 
+            success: true, 
+            groupId: group.id,
+            notAddedParticipants: notFoundParticipants
+        });
     } catch (err) {
+        await transaction.rollback();
         console.error('Error creating group:', err);
         res.status(500).json({ error: 'Failed to create group', details: err.message });
     }
@@ -50,14 +70,13 @@ exports.getGroups = async (req, res) => {
                 model: User,
                 as: 'members',
                 through: {
-                    model: GroupMember,
+                    attributes: [], // Exclude intermediate table attributes
                     where: {
                         userId: userId
                     },
                 },
-                attributes: ['id', 'name', 'email'] 
-            }],
-            where: {} // Remove the where clause to include all groups the user is a member of
+                attributes: ['id', 'name', 'email'] // Attributes of the User model to include
+            }]
         });
 
         if (groups.length === 0) {
@@ -72,6 +91,7 @@ exports.getGroups = async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch groups' });
     }
 };
+
 
 exports.getGroupMessages = async (req, res, next) => {
     const { groupId } = req.params;

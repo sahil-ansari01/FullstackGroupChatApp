@@ -1,4 +1,3 @@
-// models/groupMember.js
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = require('../util/database');
 const Group = require('./group');
@@ -33,6 +32,19 @@ const GroupMember = sequelize.define('GroupMember', {
         type: DataTypes.BOOLEAN,
         defaultValue: false
     }
+}, {
+    indexes: [
+        {
+            unique: true,
+            fields: ['groupId', 'userId']
+        }
+    ]
 });
+
+// Define associations
+GroupMember.associate = (models) => {
+    GroupMember.belongsTo(models.Group, { foreignKey: 'groupId' });
+    GroupMember.belongsTo(models.User, { foreignKey: 'userId' });
+};
 
 module.exports = GroupMember;

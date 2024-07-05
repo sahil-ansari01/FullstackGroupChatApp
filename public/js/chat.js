@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     const token = localStorage.getItem('token');
     if (!token) {
         alert('User not logged in');
-        window.location.href = '/login';
+        window.location.href = '/user/login';
         return;
     }
 
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         try {
             const response = await axios.get(`/group/user/?userId=${userId}`);
             const groups = response.data?.groups || [];
-
+            console.log(groups);
             const groupList = document.getElementById('groupList');
             groupList.innerHTML = '';
             if (Array.isArray(groups)) {
