@@ -1,4 +1,12 @@
 document.addEventListener('DOMContentLoaded', async (event) => {
+    const groupSettingsModal = document.getElementById('groupSettingsModal');
+    const closeSettingsModal = document.getElementById('closeSettingsModal');
+
+    closeSettingsModal.addEventListener('click', () => {
+        groupSettingsModal.classList.remove('visible');
+        groupSettingsModal.classList.add('hidden');
+    });
+
     const token = localStorage.getItem('token');
     if (!token) {
         alert('User not logged in');
@@ -19,6 +27,156 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     document.getElementById('newGroupForm').addEventListener('submit', createNewGroup);
     document.getElementById('groupSearch').addEventListener('input', filterGroups);
     document.getElementById('logoutButton').addEventListener('click', logout);
+
+     // Check if user is an admin
+     async function checkIfUserIsAdmin(groupId, userId) {
+        try {
+            const response = await axios.get(`/group/${groupId}/isAdmin?userId=${userId}`);
+            return response.data.isAdmin;
+        } catch (error) {
+            console.error('Error checking admin status:', error);
+            return false;
+        }
+    }
+
+    // Show group settings modal if the user is an admin
+    async function openGroupSettings(groupId) {
+        const isAdmin = await checkIfUserIsAdmin(groupId, userId);
+        if (isAdmin) {
+            groupSettingsModal.classList.remove('hidden');
+            groupSettingsModal.classList.add('visible');
+            await loadGroupMembers(groupId);
+        } else {
+            alert('Only group admins can access settings.');
+        }
+    }
+
+    async function loadGroupMessages(groupId, groupName) {
+        currentGroupId = groupId;
+        const currentGroupHeader = document.getElementById('currentGroupHeader');
+        
+        // Clear previous content
+        currentGroupHeader.innerHTML = '';
+        
+        // Create and style the group name
+        const groupNameSpan = document.createElement('span');
+        groupNameSpan.textContent = groupName;
+        
+        // Check if the user is an admin
+        const isAdmin = await checkIfUserIsAdmin(groupId, userId);
+        
+        if (isAdmin) {
+            // Create and style the settings icon
+            const groupSetting = document.createElement('span');
+            groupSetting.innerHTML = '<i class="fas fa-cog"></i>'; // Font Awesome settings icon
+            groupSetting.style.marginLeft = 'auto'; // Push the settings icon to the right
+            groupSetting.style.cursor = 'pointer'; // Add a cursor pointer for better UX
+            
+            // Add the onclick handler
+            groupSetting.onclick = function() {
+                openGroupSettings(groupId);
+            };
+            
+            // Append settings icon to the header
+            currentGroupHeader.appendChild(groupSetting);
+        }
+        
+        // Append group name to the header
+        currentGroupHeader.appendChild(groupNameSpan);
+        
+        lastMessageTimestamp = 0;
+        
+        document.getElementById('chat').innerHTML = '';
+        localStorage.removeItem(`chatMessages_${currentGroupId}`);
+        
+        try {
+            const response = await axios.get(`/group/${groupId}/messages`);
+            const messages = response.data;
+            await storeMessagesLocally(messages);
+            await loadMessagesFromStorage();
+        } catch (error) {
+            console.error('Error loading group messages:', error);
+        }
+    }
+    
+    async function loadGroupMembers(groupId) {
+        try {
+            const response = await axios.get(`/group/${groupId}/members?userId=${userId}`);
+            const membersList = response.data.membersList;
+            console.log(membersList);
+            const groupMembersList = document.getElementById('groupMembers');
+            groupMembersList.innerHTML = '';
+    
+            membersList.forEach(member => {
+                const memberItem = document.createElement('li');
+                memberItem.style.listStyle = 'none';
+                memberItem.textContent = `${member.name} `;
+    
+                const makeAdminButton = document.createElement('button');
+                makeAdminButton.textContent = 'Make Admin';
+                makeAdminButton.classList.add('admin-button'); // Adding class for styling
+                makeAdminButton.onclick = async function() {
+                    await makeAdmin(groupId, member.id);
+                };
+    
+                const removeButton = document.createElement('button');
+                removeButton.textContent = 'Remove';
+                removeButton.classList.add('remove-button'); // Adding class for styling
+                removeButton.onclick = async function() {
+                    await removeMember(groupId, member.id);
+                };
+    
+                // Create a container for buttons and align them to the right
+                const buttonContainer = document.createElement('div');
+                buttonContainer.style.marginLeft = 'auto'; 
+                buttonContainer.classList = 'buttonContainer';
+                buttonContainer.appendChild(makeAdminButton);
+                buttonContainer.appendChild(removeButton);
+    
+                memberItem.appendChild(buttonContainer);
+                groupMembersList.appendChild(memberItem);
+            });
+        } catch (error) {
+            console.error('Error loading group members:', error);
+        }
+    }    
+    
+    async function makeAdmin(groupId, userId) {
+        try {
+            await axios.post(`/group/${groupId}/makeAdmin`, { userId });
+            alert(`User ${userId} has been made an admin.`);
+        } catch (error) {
+            console.error('Error making user an admin:', error);
+        }
+    }
+    
+    async function removeMember(groupId, userId) {
+        try {
+            await axios.post(`/group/${groupId}/removeMember`, { userId });
+            alert('User has been removed from the group.');
+            await loadGroupMembers(groupId);
+        } catch (error) {
+            console.error('Error removing user from group:', error);
+        }
+    }    
+
+    // Search users when typing in the search input
+    document.getElementById('searchUsers').addEventListener('input', async (event) => {
+        const query = event.target.value.trim();
+        if (query) {
+            const users = await searchUsers(query);
+            const searchResults = document.getElementById('searchResults');
+            searchResults.innerHTML = '';
+
+            users.forEach(user => {
+                const userItem = document.createElement('div');
+                userItem.textContent = `${user.name} (${user.email})`;
+                userItem.classList.add('p-2', 'hover:bg-gray-200', 'cursor-pointer');
+                userItem.addEventListener('click', () => addMemberToGroup(currentGroupId, user.id));
+                searchResults.appendChild(userItem);
+            });
+        }
+    });
 
     async function handleMessageSubmit(e) {
         e.preventDefault();
@@ -155,24 +313,6 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         }
     }
 
-    async function loadGroupMessages(groupId, groupName) {
-        currentGroupId = groupId;
-        document.getElementById('currentGroupHeader').textContent = groupName;
-        lastMessageTimestamp = 0;
-
-        document.getElementById('chat').innerHTML = '';
-        localStorage.removeItem(`chatMessages_${currentGroupId}`);
-
-        try {
-            const response = await axios.get(`/group/${groupId}/messages`);
-            const messages = response.data;
-            await storeMessagesLocally(messages);
-            await loadMessagesFromStorage();
-        } catch (error) {
-            console.error('Error loading group messages:', error);
-        }
-    }
-
     function showNewGroupModal() {
         document.getElementById('newGroupModal').classList.add('visible');
     }
@@ -265,7 +405,7 @@ document.addEventListener('DOMContentLoaded', async (event) => {
                 }
             }
         }
-    }, 5000);
+    }, 60000);
 
     // Initial load
     await loadGroups();

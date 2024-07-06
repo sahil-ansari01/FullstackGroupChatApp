@@ -1,0 +1,75 @@
+.chat-container {
+    height: calc(100vh - 8rem);
+    overflow-y: auto;
+}
+.group-list {
+    height: calc(100vh - 4rem);
+    overflow-y: auto;
+}
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+}
+.modal.visible {
+    display: flex;
+}
+
+#currentGroupHeader {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: #f1f1f1;
+    border-bottom: 1px solid #ccc;
+}
+
+#currentGroupHeader span {
+    margin-right: 10px;
+}
+
+#currentGroupHeader .fa-cog {
+    font-size: 18px;
+}
+
+.admin-button {
+    padding: 5px 10px;
+    background-color: #4CAF50; 
+    color: white; 
+    border: none; 
+    border-radius: 4px;
+    cursor: pointer; 
+    font-size: 14px; 
+}
+
+.admin-button:hover {
+    background-color: #45a049; 
+}
+
+.remove-button {
+    padding: 5px 10px; 
+    margin-left: 20px;
+    background-color: #c94732; 
+    color: white; 
+    border: none; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    font-size: 14px;
+}
+
+.remove-button:hover {
+    background-color: #9d4f4f; 
+}
+
+
+/* Style for container to align buttons to the right */
+.buttonContainer {
+    display: flex;
+    align-content: end;
+    flex-wrap: wrap;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+

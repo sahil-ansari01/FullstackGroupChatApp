@@ -111,3 +111,85 @@ exports.getGroupMessages = async (req, res, next) => {
         res.status(500).json({ error: 'Failed to fetch group messages' });
     }
 };
+
+exports.isAdmin = async (req, res) => {
+    const { groupId } = req.params;
+    const { userId } = req.query;
+
+    try {
+        const groupMember = await GroupMember.findOne({
+            where: {
+                groupId,
+                userId,
+                isAdmin: true
+            }
+        });
+
+        res.json({ isAdmin: !!groupMember });
+    } catch (error) {
+        console.error('Error checking admin status:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+exports.getMembers = async (req, res, next) => {
+    try {
+        const { groupId } = req.params;
+        const { userId } = req.query;
+
+        const groupMembers = await GroupMember.findAll({
+            where: {
+                groupId: groupId
+            }
+        });
+
+        const memberIds = groupMembers.map(member => member.userId);
+
+        if (memberIds.length === 0) {
+            console.log('No members found for group:', groupId);
+            return res.json({ membersList: [] });
+        }
+
+        let membersList = await User.findAll({
+            where: {
+                id: memberIds
+            }
+        });
+
+        membersList = membersList.filter(member => member.id !== userId);
+        console.log(membersList);
+        console.log(`Found ${membersList.length} members for group:`, groupId);
+
+        res.json({ membersList: membersList });
+    } catch (error) {
+        console.error('Error getting the members:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+exports.makeAdmin = async (req, res, next) => {
+    const { groupId } = req.params;
+    const { userId } = req.body;
+
+    try {
+        await GroupMember.update({ isAdmin: true }, { where: { groupId, userId } });
+        res.status(200).send({ message: 'User made admin successfully' });
+    } catch (error) {
+        console.error('Error making user an admin:', error);
+        res.status(500).send({ error: 'Failed to make user admin' });
+    }
+}
+
+exports.removeMember = async (req, res, next) => {
+    const { groupId } = req.params;
+    const { userId } = req.body;
+    console.log(groupId, userId);
+
+    try {
+        await GroupMember.destroy({ where: { groupId, userId } });
+        res.status(200).send({ message: 'User removed from group successfully' });
+    } catch (error) {
+        console.error('Error removing user from group:', error);
+        res.status(500).send({ error: 'Failed to remove user from group' });
+    }
+}

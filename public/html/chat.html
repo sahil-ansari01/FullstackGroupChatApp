@@ -4,28 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Group Chat Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        .chat-container {
-            height: calc(100vh - 8rem);
-            overflow-y: auto;
-        }
-        .group-list {
-            height: calc(100vh - 4rem);
-            overflow-y: auto;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-        }
-        .modal.visible {
-            display: flex;
-        }
-    </style>
+    <link rel="stylesheet" href="../css/chat.css">
 </head>
 <body class="bg-gray-100">
     <header class="bg-green-500 shadow-lg p-4 flex justify-between items-center">
@@ -74,6 +55,27 @@
                 <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none">Create Group</button>
                 <button type="button" id="closeModal" class="ml-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none">Cancel</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Group Settings Modal -->
+    <div id="groupSettingsModal" class="modal">
+        <div class="bg-white p-4 rounded-lg w-1/2">
+            <h2 class="text-xl font-bold mb-4">Group Settings</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold">Add Members</h3>
+                <input type="text" id="searchUsers" placeholder="Search by name, email, or phone number" class="w-full p-2 mb-2 border rounded focus:outline-none focus:border-green-500">
+                <div id="searchResults" class="space-y-2">
+                    <!-- Search results will be displayed here -->
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold">Group Members</h3>
+                <ul id="groupMembers" class="list-disc list-inside">
+                    <!-- Group members will be displayed here -->
+                </ul>
+            </div>
+            <button type="button" id="closeSettingsModal" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none">Close</button>
         </div>
     </div>
 
