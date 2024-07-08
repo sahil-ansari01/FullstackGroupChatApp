@@ -160,23 +160,68 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         }
     }    
 
-    // Search users when typing in the search input
+    async function searchUsers(query) {
+        try {
+            console.log('Searching for users with query:', query);
+            const response = await axios.get(`/user/search?query=${encodeURIComponent(query)}`);
+            console.log('Search response:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Error searching users:', error);
+            if (error.response) {
+                console.error('Error response:', error.response.data);
+            }
+            return [];
+        }
+    }
+
+    // Modify the existing event listener for the search input
     document.getElementById('searchUsers').addEventListener('input', async (event) => {
         const query = event.target.value.trim();
+        const searchResults = document.getElementById('searchResults');
+        searchResults.innerHTML = '';
+    
         if (query) {
-            const users = await searchUsers(query);
-            const searchResults = document.getElementById('searchResults');
-            searchResults.innerHTML = '';
-
-            users.forEach(user => {
-                const userItem = document.createElement('div');
-                userItem.textContent = `${user.name} (${user.email})`;
-                userItem.classList.add('p-2', 'hover:bg-gray-200', 'cursor-pointer');
-                userItem.addEventListener('click', () => addMemberToGroup(currentGroupId, user.id));
-                searchResults.appendChild(userItem);
-            });
+            try {
+                const users = await searchUsers(query);
+                
+                if (users.length > 0) {
+                    users.forEach(user => {
+                        const userItem = document.createElement('div');
+                        userItem.textContent = `${user.name} (${user.email || user.phone || 'No contact info'})`;
+                        userItem.classList.add('p-2', 'hover:bg-gray-200', 'cursor-pointer');
+                        userItem.addEventListener('click', () => addMemberToGroup(currentGroupId, user.id));
+                        searchResults.appendChild(userItem);
+                    });
+                } else {
+                    const noResults = document.createElement('div');
+                    noResults.textContent = 'No users found';
+                    noResults.classList.add('p-2', 'text-gray-500');
+                    searchResults.appendChild(noResults);
+                }
+            } catch (error) {
+                console.error('Error in user search:', error);
+                const errorMessage = document.createElement('div');
+                errorMessage.textContent = 'An error occurred while searching';
+                errorMessage.classList.add('p-2', 'text-red-500');
+                searchResults.appendChild(errorMessage);
+            }
         }
     });
+
+    // The addMemberToGroup function remains the same
+    async function addMemberToGroup(groupId, userId) {
+        try {
+            await axios.post(`/group/${groupId}/addMember`, { userId });
+            alert('User added to the group successfully');
+            await loadGroupMembers(groupId);
+            document.getElementById('searchUsers').value = '';
+            document.getElementById('searchResults').innerHTML = '';
+        } catch (error) {
+            console.error('Error adding user to group:', error);
+            alert('Failed to add user to the group');
+        }
+    }
 
     async function handleMessageSubmit(e) {
         e.preventDefault();

@@ -135,7 +135,12 @@ exports.isAdmin = async (req, res) => {
 exports.getMembers = async (req, res, next) => {
     try {
         const { groupId } = req.params;
-        const { userId } = req.query;
+        const { userId } = req.query; // Ensure userId is passed as a query parameter
+
+        if (!userId) {
+            console.log('No userId provided');
+            return res.status(400).json({ error: 'User ID is required' });
+        }
 
         const groupMembers = await GroupMember.findAll({
             where: {
@@ -156,8 +161,8 @@ exports.getMembers = async (req, res, next) => {
             }
         });
 
-        membersList = membersList.filter(member => member.id !== userId);
-        console.log(membersList);
+        membersList = membersList.filter(member => member.id.toString() !== userId);
+
         console.log(`Found ${membersList.length} members for group:`, groupId);
 
         res.json({ membersList: membersList });
@@ -166,6 +171,42 @@ exports.getMembers = async (req, res, next) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+exports.addMember = async (req, res, next) => {
+    try {
+        const { groupId } = req.params;
+        const { userId } = req.body;
+
+        // Check if the group exists
+        const group = await Group.findByPk(groupId);
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+
+        // Check if the user exists
+        const user = await User.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Check if the user is already a member of the group
+        const existingMembership = await UserGroup.findOne({
+            where: { userId, groupId }
+        });
+
+        if (existingMembership) {
+            return res.status(400).json({ error: 'User is already a member of this group' });
+        }
+
+        // Add the user to the group
+        await UserGroup.create({ userId, groupId });
+
+        res.status(201).json({ message: 'User added to group successfully' });
+    } catch (error) {
+        console.error('Error adding user to group:', error);
+        res.status(500).json({ error: 'An error occurred while adding user to group' });
+    }
+}
 
 exports.makeAdmin = async (req, res, next) => {
     const { groupId } = req.params;
@@ -191,5 +232,32 @@ exports.removeMember = async (req, res, next) => {
     } catch (error) {
         console.error('Error removing user from group:', error);
         res.status(500).send({ error: 'Failed to remove user from group' });
+    }
+}
+
+exports.searchUser = async (req, res, next) => {
+    try {
+        const { query } = req.query;
+        if (!query) {
+            return res.status(400).json({ error: 'Search query is required' });
+        }
+
+        const users = await User.findAll({
+            where: {
+                [Op.or]: [
+                    { name: { [Op.iLike]: `%${query}%` } },
+                    { email: { [Op.iLike]: `%${query}%` } },
+                    { phoneNumber: { [Op.iLike]: `%${query}%` } }
+                ]
+            },
+            attributes: ['id', 'name', 'email', 'phone'], // Only return necessary fields
+            limit: 10 // Limit the number of results
+        });
+
+        // Ensure we're sending the users array directly
+        res.json(users);
+    } catch (error) {
+        console.error('Error searching users:', error);
+        res.status(500).json({ error: 'An error occurred while searching users' });
     }
 }
