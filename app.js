@@ -18,7 +18,7 @@ const groupRoutes = require('./routes/group');
 const app = express();
 
 app.use(cors({
-    origin: ['http://localhost:3000'],
+    origin: ['http://34.207.64.152:3000'],
     credentials: true
 }));
 
