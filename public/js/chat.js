@@ -433,20 +433,6 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         }
     }
 
-    // Fetch new messages periodically
-    setInterval(async () => {
-        if (currentGroupId) {
-            const newMessages = await fetchNewMessages();
-            if (newMessages.length > 0) {
-                for (const message of newMessages) {
-                    const updatedMessage = await ensureMessageHasUserInfo(message);
-                    addMessageToChat(updatedMessage);
-                    storeMessage(updatedMessage);
-                }
-            }
-        }
-    }, 60000);
-
     // Initial load
     await loadGroups();
 });
