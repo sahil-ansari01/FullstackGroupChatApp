@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', async (event) => {
+    event.preventDefault();
+    const socket = io();
     const groupSettingsModal = document.getElementById('groupSettingsModal');
     const closeSettingsModal = document.getElementById('closeSettingsModal');
 
@@ -237,29 +239,22 @@ document.addEventListener('DOMContentLoaded', async (event) => {
                 message: messageText,
                 timestamp: Date.now()
             };
-            const savedMessage = await sendMessage(message);
-            if (savedMessage) {
-                addMessageToChat(savedMessage);
-                storeMessage(savedMessage);
-                document.getElementById('messageInput').value = '';
-            }
+            
+            // Emit the message to the server
+            socket.emit('user-message', message);
+
+            document.getElementById('messageInput').value = '';
         }
     }
 
-    async function sendMessage(message) {
-        try {
-            const res = await axios.post(`/chat/messages/${currentGroupId}`, message, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            });
-            return res.data.message;
-        } catch (err) {
-            console.error('Error sending message:', err);
-            return null;
+    // Socket.on('message') event listener
+    socket.on('message', async (message) => {
+        if (message.groupId === currentGroupId) {
+            const updatedMessage = await ensureMessageHasUserInfo(message);
+            addMessageToChat(updatedMessage);
+            storeMessage(updatedMessage);
         }
-    }
+    });
     
     function addMessageToChat(message) {
         const chat = document.getElementById('chat');

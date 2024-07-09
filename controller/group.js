@@ -250,8 +250,8 @@ exports.searchUser = async (req, res, next) => {
                     { phoneNumber: { [Op.iLike]: `%${query}%` } }
                 ]
             },
-            attributes: ['id', 'name', 'email', 'phone'], // Only return necessary fields
-            limit: 10 // Limit the number of results
+            attributes: ['id', 'name', 'email', 'phoneNumber'], 
+            limit: 10 
         });
 
         // Ensure we're sending the users array directly
