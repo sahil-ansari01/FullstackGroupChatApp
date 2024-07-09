@@ -9,7 +9,7 @@ async function login(e) {
             password: e.target.password.value
         };
 
-        const res = await axios.post('http://34.207.64.152:3000/user/login', loginDetails);
+        const res = await axios.post('http://localhost:3000/user/login', loginDetails);
         
         if (res.status === 200) {
             alert(res.data.message);

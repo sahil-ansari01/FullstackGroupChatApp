@@ -1,10 +1,12 @@
 // app.js
 require('dotenv').config();
+const http = require('http');
 const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const sequelize = require('./util/database');
 const cors = require('cors');
+const { Server } = require('socket.io');
 
 const User = require('./models/user');
 const Chat = require('./models/chat');
@@ -16,9 +18,49 @@ const chatRoutes = require('./routes/chat');
 const groupRoutes = require('./routes/group');
 
 const app = express();
+const server = http.createServer(app)
+const io = new Server(server);
+
+// Socket.io
+io.on('connection', (socket) => {
+    console.log('A user connected');
+
+    socket.on('user-message', async (message) => {
+        try {
+            // Save the message to the database
+            const savedMessage = await Chat.create({
+                userId: message.userId,
+                groupId: message.groupId,
+                message: message.message,
+                timestamp: message.timestamp
+            });
+
+            // Fetch the user information
+            const user = await User.findByPk(message.userId);
+
+            // Prepare the message with user information
+            const messageWithUser = {
+                ...savedMessage.get(),
+                User: {
+                    id: user.id,
+                    name: user.name
+                }
+            };
+
+            // Broadcast the message to all connected clients
+            io.emit('message', messageWithUser);
+        } catch (error) {
+            console.error('Error saving message:', error);
+        }
+    });
+
+    socket.on('disconnect', () => {
+        console.log('User disconnected');
+    });
+});
 
 app.use(cors({
-    origin: ['http://34.207.64.152:3000'],
+    origin: ['http://localhost:3000'],
     credentials: true
 }));
 
@@ -41,7 +83,7 @@ Group.belongsToMany(User, { through: GroupMember, as: 'members', foreignKey: 'us
 
 sequelize.sync()
     .then(() => {
-        app.listen(3000, () => {
+        server.listen(3000, () => {
             console.log('Server is running on port 3000');
         });
     })

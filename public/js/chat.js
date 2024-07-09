@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', async (event) => {
+    const socket = io();
     const groupSettingsModal = document.getElementById('groupSettingsModal');
     const closeSettingsModal = document.getElementById('closeSettingsModal');
 
@@ -160,54 +161,66 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         }
     }    
 
-    async function searchUsers(query) {
+    // Modify the searchUsers function
+async function searchUsers(query) {
+    try {
+        console.log('Searching for users with query:', query);
+        const response = await axios.get(`/user/search?query=${encodeURIComponent(query)}`);
+        console.log('Search response:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error searching users:', error);
+        if (error.response) {
+            console.error('Error response:', error.response.data);
+        }
+        return [];
+    }
+}
+
+// Modify the event listener for the search input
+document.getElementById('searchUsers').addEventListener('input', debounce(async (event) => {
+    const query = event.target.value.trim();
+    const searchResults = document.getElementById('searchResults');
+    searchResults.innerHTML = '';
+
+    if (query) {
         try {
-            console.log('Searching for users with query:', query);
-            const response = await axios.get(`/user/search?query=${encodeURIComponent(query)}`);
-            console.log('Search response:', response.data);
-            return response.data;
-        } catch (error) {
-            console.error('Error searching users:', error);
-            if (error.response) {
-                console.error('Error response:', error.response.data);
+            const users = await searchUsers(query);
+            
+            if (users.length > 0) {
+                users.forEach(user => {
+                    const userItem = document.createElement('div');
+                    userItem.textContent = `${user.name} (${user.email || user.phoneNumber || 'No contact info'})`;
+                    userItem.classList.add('p-2', 'hover:bg-gray-200', 'cursor-pointer');
+                    userItem.addEventListener('click', () => addMemberToGroup(currentGroupId, user.id));
+                    searchResults.appendChild(userItem);
+                });
+            } else {
+                const noResults = document.createElement('div');
+                noResults.textContent = 'No users found';
+                noResults.classList.add('p-2', 'text-gray-500');
+                searchResults.appendChild(noResults);
             }
-            return [];
+        } catch (error) {
+            console.error('Error in user search:', error);
+            const errorMessage = document.createElement('div');
+            errorMessage.textContent = 'An error occurred while searching';
+            errorMessage.classList.add('p-2', 'text-red-500');
+            searchResults.appendChild(errorMessage);
         }
     }
+}, 300)); // Debounce for 300ms
 
-    // Modify the existing event listener for the search input
-    document.getElementById('searchUsers').addEventListener('input', async (event) => {
-        const query = event.target.value.trim();
-        const searchResults = document.getElementById('searchResults');
-        searchResults.innerHTML = '';
-    
-        if (query) {
-            try {
-                const users = await searchUsers(query);
-                
-                if (users.length > 0) {
-                    users.forEach(user => {
-                        const userItem = document.createElement('div');
-                        userItem.textContent = `${user.name} (${user.email || user.phone || 'No contact info'})`;
-                        userItem.classList.add('p-2', 'hover:bg-gray-200', 'cursor-pointer');
-                        userItem.addEventListener('click', () => addMemberToGroup(currentGroupId, user.id));
-                        searchResults.appendChild(userItem);
-                    });
-                } else {
-                    const noResults = document.createElement('div');
-                    noResults.textContent = 'No users found';
-                    noResults.classList.add('p-2', 'text-gray-500');
-                    searchResults.appendChild(noResults);
-                }
-            } catch (error) {
-                console.error('Error in user search:', error);
-                const errorMessage = document.createElement('div');
-                errorMessage.textContent = 'An error occurred while searching';
-                errorMessage.classList.add('p-2', 'text-red-500');
-                searchResults.appendChild(errorMessage);
-            }
-        }
-    });
+// Add a debounce function to prevent excessive API calls
+function debounce(func, delay) {
+    let debounceTimer;
+    return function() {
+        const context = this;
+        const args = arguments;
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => func.apply(context, args), delay);
+    }
+}
 
     // The addMemberToGroup function remains the same
     async function addMemberToGroup(groupId, userId) {
@@ -223,6 +236,8 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         }
     }
 
+    socket.on('message', message => console.log(message));
+
     async function handleMessageSubmit(e) {
         e.preventDefault();
         if (!currentGroupId) {
@@ -237,30 +252,23 @@ document.addEventListener('DOMContentLoaded', async (event) => {
                 message: messageText,
                 timestamp: Date.now()
             };
-            const savedMessage = await sendMessage(message);
-            if (savedMessage) {
-                addMessageToChat(savedMessage);
-                storeMessage(savedMessage);
-                document.getElementById('messageInput').value = '';
-            }
+            
+            // Emit the message to the server
+            socket.emit('user-message', message);
+
+            document.getElementById('messageInput').value = '';
         }
     }
 
-    async function sendMessage(message) {
-        try {
-            const res = await axios.post(`/chat/messages/${currentGroupId}`, message, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            });
-            return res.data.message;
-        } catch (err) {
-            console.error('Error sending message:', err);
-            return null;
+    // Socket.on('message') event listener
+    socket.on('message', async (message) => {
+        if (message.groupId === currentGroupId) {
+            const updatedMessage = await ensureMessageHasUserInfo(message);
+            addMessageToChat(updatedMessage);
+            storeMessage(updatedMessage);
         }
-    }
-    
+    });
+
     function addMessageToChat(message) {
         const chat = document.getElementById('chat');
         const messageElement = document.createElement('div');
@@ -439,18 +447,18 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     }
 
     // Fetch new messages periodically
-    setInterval(async () => {
-        if (currentGroupId) {
-            const newMessages = await fetchNewMessages();
-            if (newMessages.length > 0) {
-                for (const message of newMessages) {
-                    const updatedMessage = await ensureMessageHasUserInfo(message);
-                    addMessageToChat(updatedMessage);
-                    storeMessage(updatedMessage);
-                }
-            }
-        }
-    }, 60000);
+    // setInterval(async () => {
+    //     if (currentGroupId) {
+    //         const newMessages = await fetchNewMessages();
+    //         if (newMessages.length > 0) {
+    //             for (const message of newMessages) {
+    //                 const updatedMessage = await ensureMessageHasUserInfo(message);
+    //                 addMessageToChat(updatedMessage);
+    //                 storeMessage(updatedMessage);
+    //             }
+    //         }
+    //     }
+    // }, 60000);
 
     // Initial load
     await loadGroups();

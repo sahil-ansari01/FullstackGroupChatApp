@@ -39,7 +39,7 @@
             <form id="messageForm" class="p-4 bg-white">
                 <div class="flex">
                     <input id="messageInput" class="flex-grow border rounded-l-lg p-2 focus:outline-none focus:border-green-500" type="text" placeholder="Type your message" required>
-                    <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-r-lg focus:outline-none" type="submit">Send</button>
+                    <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-r-lg focus:outline-none" type="submit" id="sendBtn">Send</button>
                 </div>
             </form>
         </div>
@@ -82,5 +82,6 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
     <script src="../js/chat.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
 </body>
 </html>
