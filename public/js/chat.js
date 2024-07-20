@@ -358,7 +358,7 @@ document.addEventListener('DOMContentLoaded', async (event) => {
             }
     
             messageElement.innerHTML = `
-                <strong>${escapeHTML(sender)}:</strong> ${escapeHTML(message.message)}
+                <strong>${escapeHTML(sender)}:</strong> <a href="${escapeHTML(message.fileUrl)}" target="_blank" class="ml-2 text-blue-500 underline">${escapeHTML(message.message)}</a>
                 <br>${filePreview}
                 <br><small class="text-gray-500">${timeString}</small>
             `;
@@ -387,18 +387,6 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         );
     }
     
-
-    function escapeHTML(str) {
-        return str.replace(/[&<>'"]/g, 
-            tag => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                "'": '&#39;',
-                '"': '&quot;'
-            }[tag] || tag)
-        );
-    }
 
     function storeMessage(message) {
         let messages = JSON.parse(localStorage.getItem(`chatMessages_${currentGroupId}`)) || [];

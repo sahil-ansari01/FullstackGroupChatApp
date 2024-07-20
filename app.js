@@ -30,7 +30,6 @@ io.on('connection', (socket) => {
                 groupId: message.groupId,
                 message: message.message,
                 timestamp: message.timestamp,
-                isFile: message.isFile || false,
                 fileUrl: message.fileUrl
             });
 
@@ -56,7 +55,7 @@ io.on('connection', (socket) => {
 });
 
 app.use(cors({
-    origin: ['http://34.207.64.152:3000'],
+    origin: ['http://localhost:3000'],
     credentials: true
 }));
 
