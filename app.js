@@ -1,4 +1,3 @@
-// app.js
 require('dotenv').config();
 const http = require('http');
 const path = require('path');
@@ -21,24 +20,22 @@ const app = express();
 const server = http.createServer(app)
 const io = new Server(server);
 
-// Socket.io
 io.on('connection', (socket) => {
     console.log('A user connected');
 
     socket.on('user-message', async (message) => {
         try {
-            // Save the message to the database
             const savedMessage = await Chat.create({
                 userId: message.userId,
                 groupId: message.groupId,
                 message: message.message,
-                timestamp: message.timestamp
+                timestamp: message.timestamp,
+                isFile: message.isFile || false,
+                fileUrl: message.fileUrl
             });
 
-            // Fetch the user information
             const user = await User.findByPk(message.userId);
 
-            // Prepare the message with user information
             const messageWithUser = {
                 ...savedMessage.get(),
                 User: {
@@ -47,7 +44,6 @@ io.on('connection', (socket) => {
                 }
             };
 
-            // Broadcast the message to all connected clients
             io.emit('message', messageWithUser);
         } catch (error) {
             console.error('Error saving message:', error);
@@ -60,7 +56,7 @@ io.on('connection', (socket) => {
 });
 
 app.use(cors({
-    origin: ['http://34.207.64.152:3000'],
+    origin: ['http://localhost:3000'],
     credentials: true
 }));
 
@@ -79,10 +75,10 @@ Group.hasMany(Chat, { foreignKey: 'groupId' });
 Chat.belongsTo(Group, { foreignKey: 'groupId' });
 
 User.belongsToMany(Group, { through: GroupMember, as: 'groups', foreignKey: 'userId' });
-Group.belongsToMany(User, { through: GroupMember, as: 'members', foreignKey: 'userId' });
+Group.belongsToMany(User, { through: GroupMember, as: 'members', foreignKey: 'groupId' });
 
 sequelize.sync()
-    .then(() => {
+    .then(() => {   
         server.listen(3000, () => {
             console.log('Server is running on port 3000');
         });

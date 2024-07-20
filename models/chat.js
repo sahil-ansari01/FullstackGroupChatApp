@@ -24,6 +24,10 @@ const Chat = sequelize.define('Chat', {
     groupId: {
         type: DataTypes.INTEGER,
         allowNull: false
+    },
+    fileUrl: {
+        type: DataTypes.STRING,
+        allowNull: true
     }
 });
 

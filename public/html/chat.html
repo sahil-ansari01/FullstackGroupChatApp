@@ -39,9 +39,13 @@
             <form id="messageForm" class="p-4 bg-white">
                 <div class="flex">
                     <input id="messageInput" class="flex-grow border rounded-l-lg p-2 focus:outline-none focus:border-green-500" type="text" placeholder="Type your message" required>
+                    <input type="file" id="fileInput" class="hidden">
+                    <button id="fileButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 focus:outline-none mr-2" type="button">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
                     <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-r-lg focus:outline-none" type="submit">Send</button>
                 </div>
-            </form>
+            </form>            
         </div>
     </main>
 

@@ -225,6 +225,60 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         }
     }
 
+    const fileInput = document.getElementById('fileInput');
+    const fileButton = document.getElementById('fileButton');
+    fileButton.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', handleFileUpload);
+
+    async function handleFileUpload() {
+        const file = fileInput.files[0];
+        if (file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                const response = await axios.post('/chat/upload', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+                const fileUrl = response.data.url;
+                sendMessage(`File: ${file.name}`, fileUrl);
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                alert('Failed to upload file');
+            }
+        }
+    }
+
+    async function sendMessage(messageText, fileUrl = null) {
+        if (!currentGroupId) {
+            alert('Please select a group first');
+            return;
+        }
+
+        if (messageText.trim() !== "" || fileUrl) {
+            const message = {
+                userId,
+                groupId: currentGroupId,
+                message: messageText,
+                timestamp: Date.now(),
+                fileUrl: fileUrl
+            };
+            
+            // Emit the message to the server
+            socket.emit('user-message', message);
+
+            document.getElementById('messageInput').value = '';
+        }
+    }
+
+    document.getElementById('messageForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const messageText = document.getElementById('messageInput').value.trim();
+        await sendMessage(messageText);
+    });
+
     async function handleMessageSubmit(e) {
         e.preventDefault();
         if (!currentGroupId) {
@@ -237,7 +291,8 @@ document.addEventListener('DOMContentLoaded', async (event) => {
                 userId,
                 groupId: currentGroupId,
                 message: messageText,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                fileUrl: null
             };
             
             // Emit the message to the server
@@ -273,18 +328,65 @@ document.addEventListener('DOMContentLoaded', async (event) => {
             sender = message.userId ? `User ${message.userId}` : 'Unknown User';
             messageElement.classList.add('bg-gray-100');
         }
-
+    
         const timeString = new Date(message.timestamp).toLocaleTimeString();
-        messageElement.innerHTML = `
-            <strong>${escapeHTML(sender)}:</strong> ${escapeHTML(message.message)}
-            <br><small class="text-gray-500">${timeString}</small>
-        `;
-
+    
+        if (message.fileUrl !== null) {
+            const fileName = message.fileUrl.split('/').pop();
+            let filePreview = '';
+    
+            // Determine the file type and generate the preview accordingly
+            if (/\.(jpe?g|png|gif)$/i.test(fileName)) {
+                // Image preview
+                filePreview = `<img src="${escapeHTML(message.fileUrl)}" alt="${escapeHTML(fileName)}" class="w-48 h-48 mt-2 rounded">`;
+            } else if (/\.(mp4|webm)$/i.test(fileName)) {
+                // Video preview
+                filePreview = `<video controls class="w-48 h-48 mt-2 rounded"><source src="${escapeHTML(message.fileUrl)}" type="video/mp4"></video>`;
+            } else if (/\.(pdf)$/i.test(fileName)) {
+                // PDF preview
+                filePreview = `<embed src="${escapeHTML(message.fileUrl)}" type="application/pdf" class="w-48 h-48 mt-2 rounded">`;
+            } else {
+                // Link for other file types
+                filePreview = `
+                    <div class="flex items-center mt-2">
+                        <svg class="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" d="M8 3a1 1 0 00-1 1v1H6a3 3 0 00-3 3v6a3 3 0 003 3h8a3 3 0 003-3V8a3 3 0 00-3-3h-1V4a1 1 0 00-1-1H8zm2 1v1H7V4h3zM6 7a1 1 0 00-1 1v6a1 1 0 001 1h8a1 1 0 001-1V8a1 1 0 00-1-1H6zm4 4H8a1 1 0 100 2h2a1 1 0 000-2z" clip-rule="evenodd"></path>
+                        </svg>
+                        <a href="${escapeHTML(message.fileUrl)}" target="_blank" class="ml-2 text-blue-500 underline">${escapeHTML(fileName)}</a>
+                    </div>
+                `;
+            }
+    
+            messageElement.innerHTML = `
+                <strong>${escapeHTML(sender)}:</strong> ${escapeHTML(message.message)}
+                <br>${filePreview}
+                <br><small class="text-gray-500">${timeString}</small>
+            `;
+        } else {
+            messageElement.innerHTML = `
+                <strong>${escapeHTML(sender)}:</strong> ${escapeHTML(message.message)}
+                <br><small class="text-gray-500">${timeString}</small>
+            `;
+        }
+    
         if (!chat.querySelector(`[data-timestamp="${message.timestamp}"]`)) {
             chat.appendChild(messageElement);
             chat.scrollTop = chat.scrollHeight;
         }
     }
+    
+    function escapeHTML(str) {
+        return str.replace(/[&<>'"]/g, 
+            tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag] || tag)
+        );
+    }
+    
 
     function escapeHTML(str) {
         return str.replace(/[&<>'"]/g, 
