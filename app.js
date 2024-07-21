@@ -11,6 +11,7 @@ const User = require('./models/user');
 const Chat = require('./models/chat');
 const Group = require('./models/group');
 const GroupMember = require('./models/groupMember');
+require('./controller/archivedChat')
 
 const userRoutes = require('./routes/user');
 const chatRoutes = require('./routes/chat');
